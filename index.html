@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flavor Lab</title>
+  <style>
+    :root {
+      --bg: #f5f7f0;
+      --panel: #fffefa;
+      --ink: #20241f;
+      --muted: #687166;
+      --line: #d8ded0;
+      --shadow: 0 18px 50px rgba(33, 38, 29, 0.14);
+      --tomato: #d94c35;
+      --mustard: #d99a20;
+      --herb: #4f8f45;
+      --blue: #2c7c99;
+      --plum: #75539b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(217, 76, 53, 0.09), transparent 28%),
+        linear-gradient(315deg, rgba(79, 143, 69, 0.11), transparent 30%),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 36px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 20px;
+    }
+
+    .kicker {
+      margin: 0 0 6px;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 4rem);
+      line-height: 0.95;
+      letter-spacing: 0;
+    }
+
+    .seed-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .seed-input {
+      width: min(100%, 270px);
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--ink);
+      padding: 0 12px;
+      text-transform: uppercase;
+      box-shadow: 0 8px 20px rgba(32, 36, 31, 0.06);
+    }
+
+    .btn {
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--ink);
+      padding: 0 13px;
+      cursor: pointer;
+      font-weight: 800;
+      box-shadow: 0 8px 18px rgba(32, 36, 31, 0.06);
+      transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: #b8c2af;
+      box-shadow: 0 12px 24px rgba(32, 36, 31, 0.1);
+    }
+
+    .btn.primary {
+      border-color: #23281f;
+      background: #23281f;
+      color: #fffefa;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 254, 250, 0.9);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: 0;
+    }
+
+    .panel-subtitle {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .cap-control {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f2f5ec;
+    }
+
+    .cap-control button {
+      height: 30px;
+      min-width: 42px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .cap-control button[aria-pressed="true"] {
+      background: var(--panel);
+      color: var(--ink);
+      box-shadow: 0 4px 14px rgba(32, 36, 31, 0.1);
+    }
+
+    .sliders {
+      display: grid;
+      gap: 2px;
+      padding: 10px;
+    }
+
+    .flavor-row {
+      display: grid;
+      grid-template-columns: minmax(126px, 0.72fr) minmax(180px, 1fr) 48px;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 10px;
+      border-radius: 8px;
+    }
+
+    .flavor-row:hover {
+      background: #f6f8f1;
+    }
+
+    .flavor-label {
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      gap: 8px;
+      align-items: center;
+      min-width: 0;
+      font-weight: 850;
+    }
+
+    .swatch {
+      width: 18px;
+      height: 18px;
+      border: 1px solid rgba(32, 36, 31, 0.25);
+      border-radius: 5px;
+    }
+
+    .label-copy {
+      min-width: 0;
+    }
+
+    .label-copy span {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .flavor-note {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--slider-color);
+      cursor: pointer;
+    }
+
+    .value-pill {
+      justify-self: end;
+      width: 46px;
+      padding: 5px 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffefa;
+      text-align: center;
+      font-size: 0.86rem;
+      font-weight: 900;
+    }
+
+    .output {
+      position: sticky;
+      top: 18px;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      min-height: 218px;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(160deg, rgba(217, 154, 32, 0.16), transparent 45%),
+        linear-gradient(330deg, rgba(44, 124, 153, 0.13), transparent 38%),
+        #fcfbf3;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 260px;
+    }
+
+    .badge {
+      position: absolute;
+      left: 16px;
+      top: 16px;
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      padding: 0 10px;
+      border: 1px solid rgba(32, 36, 31, 0.16);
+      border-radius: 8px;
+      background: rgba(255, 254, 250, 0.82);
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      backdrop-filter: blur(8px);
+    }
+
+    .recipe-body {
+      padding: 18px;
+    }
+
+    .recipe-line {
+      margin: 0 0 18px;
+      font-size: clamp(1.3rem, 2.7vw, 2rem);
+      line-height: 1.14;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .stat {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f7f9f1;
+    }
+
+    .stat b {
+      display: block;
+      overflow-wrap: anywhere;
+      font-size: 1.15rem;
+      line-height: 1.05;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .ratio-list {
+      display: grid;
+      gap: 8px;
+      margin: 0 0 18px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .ratio-list li {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffefa;
+    }
+
+    .part-count {
+      font-weight: 950;
+      text-align: right;
+    }
+
+    .ratio-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 850;
+    }
+
+    .ratio-tag {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .empty {
+      padding: 14px;
+      border: 1px dashed #c6d0bd;
+      border-radius: 8px;
+      color: var(--muted);
+      background: #f7f9f1;
+      line-height: 1.45;
+    }
+
+    .formula-box {
+      padding: 12px;
+      border: 1px solid #ccd4c5;
+      border-radius: 8px;
+      background: #f6f8f1;
+    }
+
+    .formula-label {
+      margin: 0 0 7px;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .formula-text {
+      margin: 0;
+      overflow-wrap: anywhere;
+      font-size: 0.94rem;
+      font-weight: 850;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 860px) {
+      .topbar,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .seed-strip {
+        justify-content: stretch;
+      }
+
+      .seed-input,
+      .seed-strip .btn {
+        flex: 1 1 160px;
+      }
+
+      .output {
+        position: static;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .app {
+        width: min(100% - 20px, 1180px);
+        padding-top: 16px;
+      }
+
+      .panel-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .flavor-row {
+        grid-template-columns: 1fr 44px;
+        gap: 8px 10px;
+      }
+
+      .flavor-row input[type="range"] {
+        grid-column: 1 / -1;
+        grid-row: 2;
+      }
+
+      .value-pill {
+        grid-column: 2;
+        grid-row: 1;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      canvas {
+        height: 220px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <p class="kicker">Chip seasoning lab</p>
+        <h1>Flavor Lab</h1>
+      </div>
+      <div class="seed-strip" aria-label="Seed controls">
+        <input id="seedInput" class="seed-input" type="text" spellcheck="false" aria-label="Flavor seed code" />
+        <button id="useSeed" class="btn" type="button">Use Seed</button>
+        <button id="copySeed" class="btn" type="button">Copy</button>
+        <button id="giveIdeas" class="btn primary" type="button">Give Me Ideas</button>
+      </div>
+    </header>
+
+    <section class="layout">
+      <section class="panel" aria-labelledby="slidersTitle">
+        <div class="panel-head">
+          <div>
+            <h2 class="panel-title" id="slidersTitle">Flavor sliders</h2>
+            <p class="panel-subtitle">Zero means skip it. Anything active becomes a small part ratio.</p>
+          </div>
+          <div class="cap-control" aria-label="Maximum ratio size">
+            <button type="button" data-cap="4">4x</button>
+            <button type="button" data-cap="6" aria-pressed="true">6x</button>
+            <button type="button" data-cap="8">8x</button>
+          </div>
+        </div>
+        <div class="sliders" id="sliders"></div>
+      </section>
+
+      <aside class="panel output" aria-labelledby="recipeTitle">
+        <div class="canvas-wrap">
+          <canvas id="chipCanvas" width="900" height="520" aria-label="Seasoned chips preview"></canvas>
+          <span class="badge">Current mix</span>
+        </div>
+        <div class="recipe-body">
+          <h2 class="panel-title" id="recipeTitle">Part ratio</h2>
+          <p class="recipe-line" id="recipeLine">Ready when the sliders are.</p>
+          <div class="stats" aria-label="Mix stats">
+            <div class="stat"><b id="totalParts">0</b><span>Total parts</span></div>
+            <div class="stat"><b id="topFlavor">None</b><span>Lead flavor</span></div>
+            <div class="stat"><b id="heatLevel">0%</b><span>Heat</span></div>
+          </div>
+          <ul class="ratio-list" id="ratioList"></ul>
+          <div class="formula-box">
+            <p class="formula-label">Batch note</p>
+            <p class="formula-text" id="formulaText">Move a slider or ask for ideas to start mixing.</p>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const flavors = [
+      { name: "Cheddar Dust", note: "savory", color: "#e0a52f", value: 62 },
+      { name: "Sour Cream", note: "creamy tang", color: "#cadc8c", value: 38 },
+      { name: "Onion Powder", note: "sharp base", color: "#b99058", value: 35 },
+      { name: "BBQ Smoke", note: "sweet smoke", color: "#a4472c", value: 24 },
+      { name: "Jalapeno Heat", note: "green fire", color: "#3f9648", value: 16, heat: 1 },
+      { name: "Sea Salt", note: "crunch pop", color: "#9aa8ae", value: 48 },
+      { name: "Vinegar Snap", note: "bright acid", color: "#83b9c9", value: 20 },
+      { name: "Garlic Toast", note: "roasty", color: "#d7c379", value: 32 },
+      { name: "Ranch Herb", note: "dill finish", color: "#5c9a61", value: 28 },
+      { name: "Ketchup Powder", note: "sweet tang", color: "#d94c35", value: 26 },
+      { name: "Sweet Paprika", note: "red pepper", color: "#cc553f", value: 22 }
+    ];
+
+    const slidersEl = document.querySelector("#sliders");
+    const seedInput = document.querySelector("#seedInput");
+    const recipeLine = document.querySelector("#recipeLine");
+    const ratioList = document.querySelector("#ratioList");
+    const formulaText = document.querySelector("#formulaText");
+    const totalPartsEl = document.querySelector("#totalParts");
+    const topFlavorEl = document.querySelector("#topFlavor");
+    const heatLevelEl = document.querySelector("#heatLevel");
+    const canvas = document.querySelector("#chipCanvas");
+    const ctx = canvas.getContext("2d");
+    let maxPart = 6;
+
+    function gcd(a, b) {
+      while (b) {
+        const temp = b;
+        b = a % b;
+        a = temp;
+      }
+      return Math.abs(a);
+    }
+
+    function gcdAll(values) {
+      return values.reduce((acc, value) => gcd(acc, value), values[0] || 1);
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function valueToCode(value) {
+      return clamp(Number(value) || 0, 0, 100).toString(36).padStart(2, "0").toUpperCase();
+    }
+
+    function codeToValue(pair) {
+      const parsed = parseInt(pair, 36);
+      return Number.isFinite(parsed) ? clamp(parsed, 0, 100) : 0;
+    }
+
+    function buildSeedCode() {
+      const raw = flavors.map((flavor) => valueToCode(flavor.value)).join("");
+      return "FL-" + raw.match(/.{1,5}/g).join("-");
+    }
+
+    function applySeedCode(code) {
+      const clean = code.toUpperCase().replace(/[^A-Z0-9]/g, "").replace(/^FL/, "");
+      if (clean.length < flavors.length * 2) {
+        return false;
+      }
+
+      flavors.forEach((flavor, index) => {
+        flavor.value = codeToValue(clean.slice(index * 2, index * 2 + 2));
+      });
+
+      syncSliders();
+      update();
+      return true;
+    }
+
+    function getRatios() {
+      const active = flavors
+        .map((flavor) => ({ ...flavor }))
+        .filter((flavor) => flavor.value > 0);
+
+      if (!active.length) {
+        return [];
+      }
+
+      const topValue = Math.max(...active.map((flavor) => flavor.value));
+      const ratios = active.map((flavor) => ({
+        ...flavor,
+        parts: Math.max(1, Math.round((flavor.value / topValue) * maxPart))
+      }));
+
+      const divisor = gcdAll(ratios.map((flavor) => flavor.parts));
+      ratios.forEach((flavor) => {
+        flavor.parts = Math.max(1, flavor.parts / divisor);
+      });
+
+      return ratios.sort((a, b) => b.parts - a.parts || b.value - a.value);
+    }
+
+    function pluralParts(count) {
+      return count === 1 ? "part" : "parts";
+    }
+
+    function describeRatio(ratios) {
+      if (!ratios.length) {
+        return "No seasoning yet.";
+      }
+
+      return ratios
+        .map((flavor) => `${flavor.parts} ${pluralParts(flavor.parts)} ${flavor.name}`)
+        .join(" to ");
+    }
+
+    function describeNote(ratios) {
+      if (!ratios.length) {
+        return "Set at least one slider above zero to make a chip seasoning ratio.";
+      }
+
+      const lead = ratios[0];
+      const total = ratios.reduce((sum, flavor) => sum + flavor.parts, 0);
+      const support = ratios.slice(1, 4).map((flavor) => flavor.name).join(", ");
+      const supportText = support ? ` backed by ${support}` : "";
+      return `Mix ${total} small parts total, led by ${lead.name}${supportText}. Keep the biggest scoop at ${maxPart} or less.`;
+    }
+
+    function updateStats(ratios) {
+      const total = ratios.reduce((sum, flavor) => sum + flavor.parts, 0);
+      const heat = flavors.find((flavor) => flavor.name === "Jalapeno Heat").value;
+
+      totalPartsEl.textContent = total;
+      topFlavorEl.textContent = ratios[0] ? ratios[0].name : "None";
+      heatLevelEl.textContent = `${heat}%`;
+    }
+
+    function renderRatioList(ratios) {
+      ratioList.innerHTML = "";
+
+      if (!ratios.length) {
+        const empty = document.createElement("li");
+        empty.className = "empty";
+        empty.textContent = "All sliders are at zero. Your chips are technically just potatoes, which is valid but not very exciting.";
+        ratioList.append(empty);
+        return;
+      }
+
+      ratios.forEach((flavor) => {
+        const item = document.createElement("li");
+        item.style.setProperty("--item-color", flavor.color);
+        item.innerHTML = `
+          <span class="part-count">${flavor.parts}x</span>
+          <span class="ratio-name">${flavor.name}</span>
+          <span class="ratio-tag">${flavor.value}%</span>
+        `;
+        item.querySelector(".part-count").style.color = flavor.color;
+        ratioList.append(item);
+      });
+    }
+
+    function drawChipPreview(ratios) {
+      const width = canvas.width;
+      const height = canvas.height;
+      ctx.clearRect(0, 0, width, height);
+
+      const gradient = ctx.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, "#fff8df");
+      gradient.addColorStop(0.55, "#f1e1a6");
+      gradient.addColorStop(1, "#d7a957");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+
+      const chips = [
+        [210, 285, 230, 120, -0.16],
+        [370, 235, 250, 138, 0.22],
+        [550, 288, 260, 126, -0.25],
+        [680, 220, 205, 116, 0.28],
+        [455, 360, 270, 120, 0.06]
+      ];
+
+      chips.forEach(([x, y, rx, ry, rotate], index) => {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rotate);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, rx / 2, ry / 2, 0, 0, Math.PI * 2);
+        ctx.fillStyle = index % 2 ? "#f0c35d" : "#edb84e";
+        ctx.fill();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = "rgba(107, 70, 24, 0.24)";
+        ctx.stroke();
+
+        ctx.globalAlpha = 0.25;
+        ctx.lineWidth = 3;
+        for (let i = -3; i <= 3; i += 1) {
+          ctx.beginPath();
+          ctx.moveTo(-rx / 2 + 20, i * 15);
+          ctx.bezierCurveTo(-40, i * 10 - 24, 40, i * 10 + 24, rx / 2 - 20, i * 15);
+          ctx.strokeStyle = "#fff5be";
+          ctx.stroke();
+        }
+        ctx.restore();
+      });
+
+      const particles = ratios.length ? ratios : flavors.slice(0, 6).map((flavor) => ({ ...flavor, parts: 1 }));
+      let seed = 42;
+      flavors.forEach((flavor) => {
+        seed += flavor.value * (flavor.name.charCodeAt(0) + flavor.name.length);
+      });
+
+      function rand() {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        return seed / 4294967296;
+      }
+
+      particles.forEach((flavor) => {
+        const count = Math.max(8, flavor.parts * 14);
+        ctx.fillStyle = flavor.color;
+        for (let i = 0; i < count; i += 1) {
+          const x = 105 + rand() * 690;
+          const y = 165 + rand() * 250;
+          const size = 3 + rand() * 7;
+          ctx.globalAlpha = 0.42 + rand() * 0.3;
+          ctx.beginPath();
+          ctx.ellipse(x, y, size, size * (0.65 + rand() * 0.6), rand() * Math.PI, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "rgba(32, 36, 31, 0.18)";
+      ctx.beginPath();
+      ctx.ellipse(width / 2, 458, 370, 34, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function update() {
+      const ratios = getRatios();
+      const seed = buildSeedCode();
+      seedInput.value = seed;
+      recipeLine.textContent = describeRatio(ratios);
+      formulaText.textContent = describeNote(ratios);
+      renderRatioList(ratios);
+      updateStats(ratios);
+      drawChipPreview(ratios);
+    }
+
+    function syncSliders() {
+      document.querySelectorAll("[data-slider]").forEach((slider) => {
+        const index = Number(slider.dataset.slider);
+        slider.value = flavors[index].value;
+        slider.closest(".flavor-row").querySelector(".value-pill").textContent = flavors[index].value;
+      });
+    }
+
+    function giveIdeas() {
+      flavors.forEach((flavor, index) => {
+        const base = Math.random();
+        const shaped = index === 5 ? 34 + base * 50 : Math.pow(base, 1.35) * 100;
+        flavor.value = Math.round(shaped);
+      });
+
+      const activeCount = flavors.filter((flavor) => flavor.value > 0).length;
+      if (activeCount < 3) {
+        flavors[0].value = 62;
+        flavors[5].value = 45;
+        flavors[8].value = 36;
+      }
+
+      syncSliders();
+      update();
+    }
+
+    function buildSliders() {
+      flavors.forEach((flavor, index) => {
+        const row = document.createElement("label");
+        row.className = "flavor-row";
+        row.style.setProperty("--slider-color", flavor.color);
+        row.innerHTML = `
+          <span class="flavor-label">
+            <span class="swatch" style="background: ${flavor.color}"></span>
+            <span class="label-copy">
+              <span>${flavor.name}</span>
+              <span class="flavor-note">${flavor.note}</span>
+            </span>
+          </span>
+          <input data-slider="${index}" type="range" min="0" max="100" value="${flavor.value}" aria-label="${flavor.name}" />
+          <span class="value-pill">${flavor.value}</span>
+        `;
+        slidersEl.append(row);
+      });
+
+      slidersEl.addEventListener("input", (event) => {
+        if (!event.target.matches("[data-slider]")) {
+          return;
+        }
+        const index = Number(event.target.dataset.slider);
+        flavors[index].value = Number(event.target.value);
+        event.target.closest(".flavor-row").querySelector(".value-pill").textContent = flavors[index].value;
+        update();
+      });
+    }
+
+    document.querySelector("#giveIdeas").addEventListener("click", giveIdeas);
+
+    document.querySelector("#useSeed").addEventListener("click", () => {
+      const ok = applySeedCode(seedInput.value);
+      seedInput.style.borderColor = ok ? "var(--line)" : "var(--tomato)";
+    });
+
+    seedInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        document.querySelector("#useSeed").click();
+      }
+    });
+
+    document.querySelector("#copySeed").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(seedInput.value);
+        document.querySelector("#copySeed").textContent = "Copied";
+        setTimeout(() => {
+          document.querySelector("#copySeed").textContent = "Copy";
+        }, 1000);
+      } catch {
+        seedInput.select();
+      }
+    });
+
+    document.querySelectorAll("[data-cap]").forEach((button) => {
+      button.addEventListener("click", () => {
+        maxPart = Number(button.dataset.cap);
+        document.querySelectorAll("[data-cap]").forEach((item) => {
+          item.setAttribute("aria-pressed", item === button ? "true" : "false");
+        });
+        update();
+      });
+    });
+
+    buildSliders();
+    update();
+  </script>
+</body>
+</html>
